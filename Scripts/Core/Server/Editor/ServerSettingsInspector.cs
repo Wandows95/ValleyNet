@@ -1,4 +1,4 @@
-namespace ValleyNet.Server.Editor
+namespace ValleyNet.Core.Server.Editor
 {
     using UnityEngine;
     using UnityEditor;

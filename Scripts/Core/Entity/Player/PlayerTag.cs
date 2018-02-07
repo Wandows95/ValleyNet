@@ -1,16 +1,16 @@
-namespace ValleyNet.Entity.Player
+namespace ValleyNet.Core.Entity.Player
 {
     using UnityEngine.Networking;
-    using ValleyNet.Entity;
+    using ValleyNet.Core.Entity;
     
     public class PlayerTag : EntityTag
     {
-        protected string username;
-
+        protected string _username;
+        public string username {get{return _username;}}
 
         public PlayerTag(NetworkInstanceId netId, int updatePriority, string username="") : base(netId, updatePriority)
         {
-            this.username = username;
+            this._username = username;
         }
     }
 }

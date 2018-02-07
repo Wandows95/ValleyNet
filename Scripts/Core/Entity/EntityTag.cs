@@ -1,4 +1,4 @@
-namespace ValleyNet.Entity
+namespace ValleyNet.Core.Entity
 {
     using UnityEngine.Networking;
 
@@ -7,7 +7,7 @@ namespace ValleyNet.Entity
         protected NetworkInstanceId _netId;
         protected int _updatePriority; // 0 is highest priority
 
-        public uint netId {get{ return (int)_netId.Value;}}
+        public int netId {get{ return (int)_netId.Value;}}
 
         public EntityTag(NetworkInstanceId netId, int updatePriority)
         {

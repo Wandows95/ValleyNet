@@ -5,32 +5,23 @@
 *       1. Invoke handler logic for New Connections
 *       2. Enforce the network level rules (max connections, banned ips, whitelists, send rate)
  */
-namespace ValleyNet.Server
+namespace ValleyNet.Core.PEN
 {
     using System;
     using System.Collections;
     using System.Collections.Generic;
     using UnityEngine;
     using UnityEngine.Networking;
-    using ValleyNet.Protocol.Message;
-    using ValleyNet.Entity.Player;
-    using ValleyNet.Session;
+    using ValleyNet.Core.Protocol.Message;
+    using ValleyNet.Core.Entity.Player;
+    using ValleyNet.Core.Session;
 
-    // What phase of execution the server is currently in
-    // Server state supercedes Gamemode's phase scheduler (Gamemode controls server state while server is in "Play" state via Phases)
-    // That being said, server-level code can forcibly end the "Play" state from outside a Gamemode
-    public class ServerState
-    {
-        public const short Setup = 1;   // Server is setting up or loading gamemode
-        public const short Lobby = 2;   // Server is idling, waiting for new connections (dictated by gamemode scheduler)
-        public const short Play = 3;    // Server is in main game loop (dictated by gamemode scheduler)
-        public const short Pause = 4;   // Server is in suspended state, sending idle frames to all clients and freezing simulation
-    }
+    
 
 
     public class Server : MonoBehaviour
     {
-        private Server _instance;
+        private static Server _instance;
         private NetworkServer _server;
         
         /* EVENTS */
@@ -55,7 +46,7 @@ namespace ValleyNet.Server
         {
             if(_instance == null)
             {
-                GameObject go = Instantiate("ValleyNet Server");
+                GameObject go = new GameObject();
                 _instance = go.AddComponent<Server>();
             }
             

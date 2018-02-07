@@ -6,7 +6,7 @@
 
 namespace ValleyNet.Gamemode.Player
 {
-    using ValleyNet.Entity.Player;
+    using ValleyNet.Core.Entity.Player;
 
 
     public class BasePerformanceTag

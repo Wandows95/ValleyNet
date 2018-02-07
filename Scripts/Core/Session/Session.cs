@@ -4,7 +4,7 @@
 *
 *   Server --> Session --> Gamemode --> Match
 */
-namespace ValleyNet.Session
+namespace ValleyNet.Core.Session
 {
     using System;
     using System.Collections.Generic;

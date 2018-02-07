@@ -2,14 +2,14 @@ namespace ValleyNet.Network
 {
 
     using UnityEngine.Networking;
-    using ValleyNet.Client;
+    using ValleyNet.Core.Client;
 
 
     public class NetClientTransmitter
     {
         public static bool SendOnMain(short msgType, MessageBase msg)
         {
-            Client mainInstance = Client.mainInstance;
+            ValleyClient mainInstance = ValleyClient.mainInstance;
 
             if(mainInstance == null)
             {

@@ -9,7 +9,7 @@ namespace ValleyNet.Gamemode
     using System.Collections;
     using System.Collections.Generic;
     using UnityEngine;
-    using ValleyNet.Session;
+    using ValleyNet.Core.Session;
     using ValleyNet.Gamemode;
     using ValleyNet.Gamemode.Phase;
 

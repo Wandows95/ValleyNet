@@ -1,9 +1,10 @@
 namespace ValleyNet.Gamemode.Manager
 {
+    using System;
     using System.Collections.Generic;
     using UnityEngine;
-    using ValleyNet.Server;
-    using ValleyNet.Entity.Player;
+    using ValleyNet.Core.Server;
+    using ValleyNet.Core.Entity.Player;
 
 
     public class BasePlayerManager : MonoBehaviour
@@ -19,7 +20,7 @@ namespace ValleyNet.Gamemode.Manager
 
         void Start()
         {
-            Server.GetInstance().ServerAddedPlayer += ;
+            //Server.GetInstance().ServerAddedPlayer += ;
         }
 
         
@@ -48,6 +49,10 @@ namespace ValleyNet.Gamemode.Manager
                 Debug.Log("[ValleyNet] Player Manager: Unable to register player with no registered gamemode");
             }
             else if(_currentMode.maxPlayers >= _playerList.Count)
+            {
+                //TO-DO
+                Debug.Log("TODO");
+            }
             else if(_playerList.ContainsKey(netId))
             {
                 Debug.Log("[ValleyNet] Player Manager: Unable to add duplicate player [" + p.username + "].");

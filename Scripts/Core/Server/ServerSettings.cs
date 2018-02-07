@@ -1,4 +1,4 @@
-namespace ValleyNet.Server
+namespace ValleyNet.Core.Server
 {
     using UnityEngine;
     using System.Collections.Generic;
@@ -7,6 +7,8 @@ namespace ValleyNet.Server
     [CreateAssetMenu(fileName = "ServerSettings", menuName = "ValleyNet/ServerSettings", order = 0)]
     public class ServerSettings : ScriptableObject
     {
+        public string serverName = "";
+        public string serverMOTD = "";
         [HideInInspector]
         public int serverPort = 8888;
         [HideInInspector]
