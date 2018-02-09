@@ -1,7 +1,7 @@
 /*
 *   Basic MonoBehaviour hook into ValleyClient
 */
-namespace ValleyNet.Core.Client.Component
+namespace ValleyNet.Core.Component.Client
 {
     using UnityEngine;
     using ValleyNet.Core.Client;
@@ -26,9 +26,9 @@ namespace ValleyNet.Core.Client.Component
 
         void Start()
         {
-            ProfileMessage profile = new ProfileMessage();  // Build profile for client
-            profile.username = _username;
-            _client = new ValleyClient(profile, useBaseNetworkHandlers); // Create client for profile
+            IdentityMessage identity = new IdentityMessage();  // Build profile for client
+            identity.username = _username;
+            _client = new ValleyClient(identity, useBaseNetworkHandlers); // Create client for profile
             Connect();
         }
 

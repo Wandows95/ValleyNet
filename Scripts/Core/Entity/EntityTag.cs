@@ -1,4 +1,7 @@
-namespace ValleyNet.Core.Entity
+/*
+*   Tagging object used to track a networked entity
+*/
+namespace ValleyNet.Core.Tag
 {
     using UnityEngine.Networking;
 

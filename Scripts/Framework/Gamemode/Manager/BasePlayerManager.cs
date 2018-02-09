@@ -4,17 +4,17 @@ namespace ValleyNet.Gamemode.Manager
     using System.Collections.Generic;
     using UnityEngine;
     using ValleyNet.Core.Server;
-    using ValleyNet.Core.Entity.Player;
+    using ValleyNet.Core.Tag;
 
 
     public class BasePlayerManager : MonoBehaviour
     {
         protected Gamemode _currentMode;
-        Dictionary<uint, PlayerTag> _playerList;
+        Dictionary<uint, IdentityTag> _playerList;
 
         void Awake()
         {
-            _playerList = new Dictionary<uint, PlayerTag>();
+            _playerList = new Dictionary<uint, IdentityTag>();
         }
 
 
@@ -42,7 +42,7 @@ namespace ValleyNet.Gamemode.Manager
         }
 
 
-        public bool RegisterPlayer(uint netId, PlayerTag p)
+        public bool RegisterPlayer(uint netId, IdentityTag p)
         {
             if(_currentMode == null)
             {

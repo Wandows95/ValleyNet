@@ -4,7 +4,7 @@ namespace ValleyNet.Core.Protocol.Message
     using UnityEngine.Networking;
 
     // Base player profile message
-    public class ProfileMessage : MessageBase
+    public class IdentityMessage : MessageBase
     {
         public string username = "";
         public int userId = 0;
@@ -41,7 +41,7 @@ namespace ValleyNet.Core.Protocol.Message
 
     public class MessageType
     {
-        public const short Profile = 48; // Unity's MsgType.Highest + 1
+        public const short Identity = 48; // Unity's MsgType.Highest + 1
         public const short Config = 49;
         public const short AddPlayerReq = 50;
     }

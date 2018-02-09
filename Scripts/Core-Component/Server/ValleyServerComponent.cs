@@ -15,6 +15,7 @@ namespace ValleyNet.Core.Server.Component
         [SerializeField]
         protected string _serverMOTD = "";
 
+
         void Awake()
         {
             ServerConfig conf = new ServerConfig();

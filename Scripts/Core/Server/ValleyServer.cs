@@ -12,7 +12,7 @@ namespace ValleyNet.Core.Server
     using UnityEngine;
     using UnityEngine.Networking;
     using ValleyNet.Core.Protocol.Message;
-    using ValleyNet.Core.Entity.Player;
+    using ValleyNet.Core.Tag;
     using ValleyNet.Core.Session;
     using ValleyNet.Core.Server.Event;
 
@@ -33,6 +33,7 @@ namespace ValleyNet.Core.Server
     {
         public string serverName = "";
         public int serverPort = 8888;
+        public int maxConnections = 10;
         public string serverMOTD = "Powered by ValleyNet";
         public List<string> bannedIP = new List<string>(); 
         public List<string> whitelistedIP = new List<string>();
@@ -45,32 +46,36 @@ namespace ValleyNet.Core.Server
 
     public class ValleyServer
     {
-        private static ValleyServer _instance;
-        private static NetworkServer _server;
+        private volatile static ValleyServer _instance;
+        private volatile static NetworkServer _server;
 
         public static ValleyServer Instance {get{return _instance;}}
         
         /* EVENTS */
-        public event EventHandler ServerAddedMainSession;   // Most games will only need the main session
-        public event EventHandler ServerAddedNewSession;    // Raised if server adds a NON-MAIN session (multiple game sessions on one server)
-        public event EventHandler ServerRemovedSession;     // Raised if server removes a NON-MAIN session (a main session exists until end of server)
-        public event EventHandler<ConnectionEventArgs> ServerConnectedPlayer;
-        public event EventHandler ServerAddedPlayer;
-        public event EventHandler<ConnectionEventArgs> ServerDisconnectedPlayer;
+        public event EventHandler                           ServerStartedListening;
+        public event EventHandler<SessionEventArgs>         ServerAddedMainSession;   // Most games will only need the main session
+        public event EventHandler<SessionEventArgs>         ServerAddedNewSession;    // Raised if server adds a NON-MAIN session (multiple game sessions on one server)
+        public event EventHandler<SessionEventArgs>         ServerRemovedSession;     // Raised if server removes a NON-MAIN session (a main session exists until end of server)
+        public event EventHandler<ConnectionEventArgs>      ServerConnectedPlayer;
+        public event EventHandler<NetworkMessageEventArgs>  ServerReceivedProfile;    // Raised when server receives a client's identity profile
+        public event EventHandler<NetworkMessageEventArgs>  ServerAddedPlayer;
+        public event EventHandler<ConnectionEventArgs>      ServerDisconnectedPlayer;
         /**********/
-        private short _serverState;                         // Current state in the server lifecycle
-        private List<Session> _activeSessions;
-        private ServerConfig _config;
+        protected short _serverState;              // Current state in the server lifecycle
+        protected Dictionary<string, List<Session>> _activeSessions; // Key: Tag, Value: List of sessions
+        protected ServerConfig _config;
+        protected HostTopology _topology; // UNET Network Topology to use
 
         public short serverState {get{return _serverState;}}
         public ServerConfig config {get{return _config;}}
 
 
-        public ValleyServer(ServerConfig config)
+        public ValleyServer(ServerConfig config, HostTopology topology=null)
         {
+            _topology = topology;
             _config = config;
             _serverState = ServerState.Setup;
-            _activeSessions = new List<Session>();
+            _activeSessions = new Dictionary<string, List<Session>>();
             BindBaseNetworkHandlers();
 
             if(_instance == null)
@@ -88,8 +93,37 @@ namespace ValleyNet.Core.Server
                 Application.runInBackground = true;
                 NetworkServer.Listen(serverPort);
                 _serverState = ServerState.Lobby;
+                OnServerStartedListening();
                 Debug.Log("[ValleyNet] Server \'" + _config.serverName + "\' listening on " + _config.serverPort);
             }
+        }
+
+        
+        public virtual void RegisterSession(Session session)
+        {
+            List<Session> val;
+
+            // If session tag has not been registered
+            if(!_activeSessions.TryGetValue(session.tag, out val))
+            {
+                _activeSessions.Add(session.tag, new List<Session>()); // Register new tag
+            }
+
+            val.Add(session); // Add session to activeSessions
+        }
+
+
+        public virtual List<Session> GetActiveSessions(string tag)
+        {
+            List<Session> val;
+
+            // If session tag has not been registered
+            if(!_activeSessions.TryGetValue(tag, out val))
+            {
+                return new List<Session>();
+            }
+
+            return val;
         }
 
 
@@ -97,9 +131,21 @@ namespace ValleyNet.Core.Server
         private void BindBaseNetworkHandlers()
         {
             NetworkServer.RegisterHandler(MsgType.Connect, NetRaiseServerConnectedPlayer);       // Player Connects
-            NetworkServer.RegisterHandler(MessageType.Profile, NetRaiseServerProfileSync);       // Player profile is Sync'd
+            NetworkServer.RegisterHandler(MessageType.Identity, NetRaiseServerIdentitySync);       // Player identity is Sync'd
             //NetworkServer.RegisterHandler(MsgType.AddPlayer, NetRaiseServerAddedPlayer);         // Player Object is Added
             NetworkServer.RegisterHandler(MsgType.Disconnect, NetRaiseServerDisconnectedPlayer); // Player disconnects
+        }
+
+
+        // Raises 'ServerStartedListening' Event
+        protected virtual void OnServerStartedListening()
+        {
+            EventHandler handler = ServerStartedListening;
+
+            if(handler != null)
+            {
+                handler(this, new EventArgs());
+            }
         }
 
 
@@ -145,11 +191,11 @@ namespace ValleyNet.Core.Server
         }
 
 
-        // Network Facing, Raises 'ServerProfileSync' Event
-        private void NetRaiseServerProfileSync(NetworkMessage netMsg)
+        // Network Facing, Raises 'ServerIdentitySync' Event
+        private void NetRaiseServerIdentitySync(NetworkMessage netMsg)
         {
-            ProfileMessage profileMessage = netMsg.ReadMessage<ProfileMessage>();
-            Debug.Log("[ValleyNet] Server received new profile [src: " + netMsg.conn.address  + "(" + netMsg.conn.connectionId + ")] Username: " + profileMessage.username);
+            IdentityMessage identityMessage = netMsg.ReadMessage<IdentityMessage>();
+            Debug.Log("[ValleyNet] Server received new profile [src: " + netMsg.conn.address  + "(" + netMsg.conn.connectionId + ")] Username: " + identityMessage.username);
             // TO-DO Invoke ServerProfileSync, spawn playertag, register new player
         }
     }

@@ -3,8 +3,7 @@ namespace ValleyNet.Entity.Sync
     using System.Collections;
     using UnityEngine;
     using UnityEngine.Networking;
-    using ValleyNet.Network;
-
+    
 
     [RequireComponent(typeof(NetworkIdentity))]
     public class NetSyncTransform : MonoBehaviour

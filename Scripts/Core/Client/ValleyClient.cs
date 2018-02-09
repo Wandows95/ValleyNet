@@ -32,7 +32,7 @@ namespace ValleyNet.Core.Client
         private int _tickRate = 0;               // Update rate of the client's simulation. Syncs with server
         private bool _isConnected = false;
         private ConfigMessage _serverConfig;      // Message containing the server's configuration
-        private ProfileMessage _clientProfile;    // Client Profile container, used to send server our identity
+        private IdentityMessage _clientIdentity;    // Client Profile container, used to send server our identity
 
         public string serverIp                   {get{return _serverIp;}}
         public int serverPort                    {get{return _serverPort;}}
@@ -42,11 +42,11 @@ namespace ValleyNet.Core.Client
         public NetworkClient uNetClient          {get{return _client;}}
 
 
-        public ValleyClient(ProfileMessage clientProfile, bool useBaseHandlers=true)
+        public ValleyClient(IdentityMessage clientIdentity, bool useBaseHandlers=true)
         {
             _serverConfig = new ConfigMessage();
             _client = new NetworkClient();
-            _clientProfile = clientProfile;
+            _clientIdentity = clientIdentity;
 
             if(useBaseHandlers)
             {
@@ -70,12 +70,12 @@ namespace ValleyNet.Core.Client
 
                 _client.Connect(_serverIp, _serverPort); // Connect to LLAPI server via NetworkClient
 
-                Debug.Log("[ValleyNet] Client(IpBind: " + _serverIp + "): Attempting to connect to " + _serverIp + ":" + _serverPort + " as [" + _clientProfile.username + "]");            
+                Debug.Log("[ValleyNet] Client(IpBind: " + _serverIp + "): Attempting to connect to " + _serverIp + ":" + _serverPort + " as [" + _clientIdentity.username + "]");            
             }
         }
 
 
-        // Send LLAPI Message via Client
+        // Send UNet Message via Client
         public bool Send(short msgType, MessageBase msg)
         {
             if(_isConnected && _client != null)
@@ -120,9 +120,9 @@ namespace ValleyNet.Core.Client
                 handler(this, new EventArgs());
             }
             
-            _client.Send(MessageType.Profile, _clientProfile); // Send profile to server
+            _client.Send(MessageType.Identity, _clientIdentity); // Send profile to server
 
-            Debug.Log("[ValleyNet] Client(IpBind:" + _serverIp + "): Connection Success! Authenticating profile with server " + _clientProfile + "...");
+            Debug.Log("[ValleyNet] Client(IpBind:" + _serverIp + "): Connection Success! Authenticating profile with server " + _clientIdentity + "...");
 
             // Raise ClientStartSync Event
             handler = ClientStartSync;
@@ -167,6 +167,12 @@ namespace ValleyNet.Core.Client
             {
                 handler(this, new EventArgs());
             }
+        }
+
+
+        protected virtual void OnClientAddedPlayer()
+        {
+            
         }
     }
 }
