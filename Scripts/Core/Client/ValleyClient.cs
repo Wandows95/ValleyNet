@@ -17,16 +17,16 @@ namespace ValleyNet.Core.Client
     public class ValleyClient : IMessageHandlerRegisterable
     {
         protected NetworkClient _client;   // UNET's NetworkClient object
-        public static ValleyClient mainInstance; // Main ValleyNet Client instance (first made on machine by default)
+        private static ValleyClient _mainInstance; // Main ValleyNet Client instance (first made on machine by default)
         
-        /*EVENTS*/
+        /* EVENTS */
         public event EventHandler ClientRegisteredHandlers;     // Client has registered is basic network handlers
         public event EventHandler ClientConnected;              // Client has connected to a server
         public event EventHandler ClientStartSync;              // Client has initiated synchronizing with the server 
         public event EventHandler ClientFinishSync;             // Client has finished synchronizing with the server
         public event EventHandler ClientAddedPlayer;            // Client has added it's player object to the server
         public event EventHandler ClientDisconnected;           // Client has disconnected from the server
-        /********/
+        /**********/
         protected string _serverIp = "127.0.0.1"; // Target Server IP
         protected int _serverPort = 8888;         // Target Server Port
         protected string _username = "VN_USER";   // Client's username
@@ -35,12 +35,13 @@ namespace ValleyNet.Core.Client
         private ConfigMessage _serverConfig;      // Message containing the server's configuration
         private IdentityMessage _clientIdentity;    // Client Profile container, used to send server our identity
 
+        public static ValleyClient mainInstance  {get{return _mainInstance;}}
+        public NetworkClient uNetClient          {get{return _client;}}
         public string serverIp                   {get{return _serverIp;}}
         public int serverPort                    {get{return _serverPort;}}
         public int tickRate                      {get{return _tickRate;}}
         public bool isConnected                  {get{return _client.isConnected;}}
         public ConfigMessage serverConfig        {get{return _serverConfig;}}
-        public NetworkClient uNetClient          {get{return _client;}}
 
 
         public ValleyClient(IdentityMessage clientIdentity, bool useBaseHandlers=true)
@@ -131,29 +132,13 @@ namespace ValleyNet.Core.Client
         }
 
 
-        // Network Facing, Raises 'ClientDisconnected' Event
-        // Resets 'isConnected' to false
-        protected virtual void OnClientDisconnected(NetworkMessage netMsg)
-        {
-            _client.Disconnect();
-
-            // Raise ClientDisconnected Event
-            EventHandler handler = ClientDisconnected;
-            if(handler != null)
-            {
-                handler(this, new EventArgs());
-            }
-        }
-
-
         protected virtual void OnClientConnectionACK(NetworkMessage netMsg)
         {
             ConnectionResponseMessage connACK = netMsg.ReadMessage<ConnectionResponseMessage>();
 
             if(connACK.isAccepted)
-            {
-                AddPlayerRequestMessage reqMsg = new AddPlayerRequestMessage();
-                reqMsg.username = _username;
+            {   
+                
 
                 // Raise ClientConnected Event
                 EventHandler handler = ClientConnected;
@@ -163,16 +148,18 @@ namespace ValleyNet.Core.Client
                 }
                 
                 _client.Send(MessageType.Identity, _clientIdentity); // Send identity to server
-                _client.Send(MessageType.AddPlayerREQ, reqMsg);
+                
 
-                Debug.Log("[ValleyNet] Client(IpBind:" + _serverIp + "): Connection Success! Authenticating profile with server " + _clientIdentity + "...");
+                Debug.Log("[ValleyNet] Client(IpBind:" + _serverIp + "): Connection Success via Raw Message! Authenticating identity with server " + _clientIdentity + "...");
 
+                /*
                 // Raise ClientStartSync Event
                 handler = ClientStartSync;
                 if(handler != null)
                 {
                     handler(this, new EventArgs());
                 }
+                */
             }
             else if(connACK.maxConnections == connACK.currentConnections)
             {
@@ -182,12 +169,6 @@ namespace ValleyNet.Core.Client
             {
                 Debug.Log("[ValleyNet] Client(IpBind:" + _serverIp + "): Connection rejected");
             }
-        }
-
-
-        protected virtual void OnAddPlayerACK(NetworkMessage netMsg)
-        {
-            
         }
 
 
@@ -201,21 +182,61 @@ namespace ValleyNet.Core.Client
             _tickRate = _serverConfig.tickRate; // Set tickrate to server
             Time.fixedDeltaTime = 1/_serverConfig.tickRate; // Set FixedUpdate() rate to server's
 
-            Debug.Log("[ValleyNet] ValleyClient: Server connection permitted [connection# " + _serverConfig.numConnections + "/" + _serverConfig.maxConnections + "]");
-            Debug.Log("[ValleyNet] ValleyClient: Synchronized local simulation with server [tickrate: " + _tickRate + "(FixedUpdate() Rate: " + Time.fixedDeltaTime + "ms)]");
-
-            // Raise ClientFinishSync Event
-            EventHandler handler = ClientFinishSync;
+            // Raise ClientConnected Event
+            EventHandler handler = ClientConnected;
             if(handler != null)
             {
                 handler(this, new EventArgs());
             }
+            
+            _client.Send(MessageType.Identity, _clientIdentity); // Send identity to server
+            Debug.Log("[ValleyNet] Client(IpBind:" + _serverIp + "): Connection Success via Config ACK! Authenticating identity with server " + _clientIdentity + "...");
+            Debug.Log("[ValleyNet] ValleyClient: Synchronized local simulation with server [tickrate: " + _tickRate + "(FixedUpdate() Rate: " + Time.fixedDeltaTime + "ms)]");
         }
 
 
-        protected virtual void OnClientAddedPlayer()
+        protected virtual void OnIdentityResponse(NetworkMessage netMsg)
         {
-            
+            IdentityResponseMessage idResp = netMsg.ReadMessage<IdentityResponseMessage>();
+
+            if(idResp.isAccepted)
+            {
+                Debug.Log("[ValleyClient] Successfully logged in to " + _serverConfig.serverName);
+                AddPlayerRequestMessage reqMsg = new AddPlayerRequestMessage();
+                reqMsg.username = _username;
+                _client.Send(MessageType.AddPlayerREQ, reqMsg);
+            }
+            else
+            {
+                Debug.Log("[ValleyClient] Identity rejected from " + _serverConfig.serverName);
+                _client.Disconnect();
+                // Raise ClientDisconnected Event
+                EventHandler handler = ClientDisconnected;
+                if(handler != null)
+                {
+                    handler(this, new EventArgs());
+                }
+            }
+        }
+
+
+        protected virtual void OnAddPlayerACK(NetworkMessage netMsg)
+        {
+        }
+
+    
+        // Network Facing, Raises 'ClientDisconnected' Event
+        // Resets 'isConnected' to false
+        protected virtual void OnClientDisconnected(NetworkMessage netMsg)
+        {
+            _client.Disconnect();
+
+            // Raise ClientDisconnected Event
+            EventHandler handler = ClientDisconnected;
+            if(handler != null)
+            {
+                handler(this, new EventArgs());
+            }
         }
     }
 }

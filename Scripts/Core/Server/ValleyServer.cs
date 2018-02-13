@@ -72,6 +72,7 @@ namespace ValleyNet.Core.Server
         /**********/
         protected short _serverState;              // Current state in the server lifecycle
         protected Dictionary<string, List<Session>> _activeSessions; // Key: Tag, Value: List of sessions
+        protected List<IdentityTag> _connectedClients;
         protected ServerConfig _config;
         protected HostTopology _topology; // UNET Network Topology to use
 
@@ -83,6 +84,7 @@ namespace ValleyNet.Core.Server
         {
             _serverState = ServerState.Setup;
             _activeSessions = new Dictionary<string, List<Session>>();
+            _connectedClients = new List<IdentityTag>();
             
             if(_instance == null)
             {
@@ -150,8 +152,8 @@ namespace ValleyNet.Core.Server
         private void BindBaseNetworkHandlers()
         {
             NetworkServer.RegisterHandler(MessageType.ConnectREQ, NetRaiseConnectionRequested); // Client requested a connection
-            NetworkServer.RegisterHandler(MessageType.Identity, NetRaiseServerIdentitySync);       // Client sent it's identity
-            NetworkServer.RegisterHandler(MessageType.AddPlayerREQ, NetRaiseClientRequestedAddPlayer);         // Client requested at add it's player entity
+            NetworkServer.RegisterHandler(MessageType.Identity, NetRaiseClientIdentified);       // Client sent it's identity
+            NetworkServer.RegisterHandler(MessageType.AddPlayerREQ, NetRaiseClientRequestedAddPlayer); // Client requested at add it's player entity
             NetworkServer.RegisterHandler(MsgType.Disconnect, NetRaiseServerDisconnectedPlayer); // Client disconnects
         }
 
@@ -182,7 +184,7 @@ namespace ValleyNet.Core.Server
 
         // Raises 'ServerConnectedPlayer' Event
         protected virtual void OnServerConnectedPlayer(ConnectionEventArgs eventArgs)
-        {
+        {   
             EventHandler<ConnectionEventArgs> handler = ServerConnectedPlayer;
             
             if(handler != null)
@@ -192,9 +194,41 @@ namespace ValleyNet.Core.Server
         }
 
 
+        protected virtual void OnClientIdentified(IdentityTag t)
+        {
+            _connectedClients.Add(t);
+        }
+
+
+        protected virtual void OnClientRequestedAddPlayer(NetworkMessage netMsg)
+        {
+            Debug.Log("[ValleyNet] Server: Request to add player received");
+
+            EventHandler<NetworkMessageEventArgs> handler = ClientRequestedAddPlayer;
+            if(handler != null)
+            {
+                handler(this, new NetworkMessageEventArgs(netMsg));
+            }
+        }
+
+
         // Raises 'ServerDisconnectedPlayer' Event
         protected virtual void OnServerDisconnectedPlayer(ConnectionEventArgs eventArgs)
         {
+            Debug.Log("[ValleyNet] Server received Disconnect [src: " + netMsg.conn.address  + "(" + netMsg.conn.connectionId + ")]");
+
+            // Unregister client from server
+            for(int i = 0; i < _connectedClients.Count; i++)
+            {
+                IdentityTag t = _connectedClients[i];
+
+                if(netMsg.conn.connectionId == t.conn.connectionId)
+                {
+                    t.RemoveAt(i);
+                    break;
+                }
+            }
+            
             EventHandler<ConnectionEventArgs> handler = ServerDisconnectedPlayer;
             
             if(handler != null)
@@ -204,47 +238,51 @@ namespace ValleyNet.Core.Server
         }
 
 
+        // <--- ConnectREQ
         private void NetRaiseConnectionRequested(NetworkMessage netMsg)
         {
+            OnServerConnectedPlayer(new ConnectionEventArgs(netMsg.conn));
+            /* 
             ConnectionResponseMessage newResponse = new ConnectionResponseMessage();
             newResponse.isAccepted = true;
             newResponse.maxConnections = _config.maxConnections;
             newResponse.currentConnections = NetworkServer.connections.Count;
+            */
 
             Debug.Log("[ValleyNet] Server received new Connection Request [src: " + netMsg.conn.address  + "(" + netMsg.conn.connectionId + "), accepted: " + newResponse.isAccepted + "]");
-            NetworkServer.SendToClient(netMsg.conn.connectionId, MessageType.ConnectACK, newResponse);
-            OnServerConnectedPlayer(new ConnectionEventArgs(netMsg.conn));
+            //NetworkServer.SendToClient(netMsg.conn.connectionId, MessageType.ConnectACK, newResponse); // ---> ConnectACK
+            
+            ConfigMessage cfgMsg = new ConfigMessage(_config.tickrate, NetworkServer.connections.Count, _config.maxConnections, _config.serverName, _config.serverMOTD);
+            NetworkServer.SendToClient(netMsg.conn.connectionId, MessageType.Config, cfgMsg);
         }
 
 
+        // Network Facing, Raises 'ServerIdentitySync' Event
+        private void NetRaiseClientIdentified(NetworkMessage netMsg)
+        {
+            IdentityMessage identityMessage = netMsg.ReadMessage<IdentityMessage>();
+
+            Debug.Log("[ValleyNet] Server received new identity [src: " + netMsg.conn.address  + "(" + netMsg.conn.connectionId + ")] Username: " + identityMessage.username);            
+            OnClientIdentified(new IdentityTag(netMsg.conn, Permissions.PLAYER, identityMessage.username));
+
+            IdentityResponseMessage responseMessage = new IdentityResponseMessage(true, Permissions.PLAYER);
+            NetworkServer.SendToClient(netMsg.conn.connectionId, MessageType.IdentityResponse, responseMessage);
+            // TO-DO Invoke ServerProfileSync, spawn playertag, register new player
+        }
+
+
+        // <--- PlayerAddREQ
         private void NetRaiseClientRequestedAddPlayer(NetworkMessage netMsg)
         {
-            EventHandler<NetworkMessageEventArgs> handler = ClientRequestedAddPlayer;
-
-            Debug.Log("[ValleyNet] Server: Request to add player received");
-            
-            if(handler != null)
-            {
-                handler(this, new NetworkMessageEventArgs(netMsg));
-            }
+            OnClientRequestedAddPlayer(netMsg);
         }
 
 
         // Network Facing, Raises 'ServerDisconnectedPlayer' Event
         private void NetRaiseServerDisconnectedPlayer(NetworkMessage netMsg)
         {
-            Debug.Log("[ValleyNet] Server received Disconnect [src: " + netMsg.conn.address  + "(" + netMsg.conn.connectionId + ")]");
-            //NetworkServer.SendToAll();
             OnServerDisconnectedPlayer(new ConnectionEventArgs(netMsg.conn));
-        }
-
-
-        // Network Facing, Raises 'ServerIdentitySync' Event
-        private void NetRaiseServerIdentitySync(NetworkMessage netMsg)
-        {
-            IdentityMessage identityMessage = netMsg.ReadMessage<IdentityMessage>();
-            Debug.Log("[ValleyNet] Server received new profile [src: " + netMsg.conn.address  + "(" + netMsg.conn.connectionId + ")] Username: " + identityMessage.username);
-            // TO-DO Invoke ServerProfileSync, spawn playertag, register new player
+            //NetworkServer.SendToAll(MessageType.DisconnectNotice, new );
         }
     }
 }
