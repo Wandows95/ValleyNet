@@ -1,11 +1,11 @@
-namespace ValleyNet.Session
+namespace ValleyNet.Framework.Session
 {
     using System;
     using System.Collections.Generic;
     using UnityEngine;
     using ValleyNet.Core.Session;
     using ValleyNet.Map;
-    using ValleyNet.Gamemode;
+    using ValleyNet.Framework.Gamemode;
 
     public class GamemodeSession : Session
     {

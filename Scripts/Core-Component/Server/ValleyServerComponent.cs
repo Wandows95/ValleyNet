@@ -14,22 +14,22 @@ namespace ValleyNet.Core.Server.Component
         protected string _serverName = "";
         [SerializeField]
         protected string _serverMOTD = "";
-
+        private ServerConfig _conf;
 
         void Awake()
         {
-            ServerConfig conf = new ServerConfig();
-            conf.serverPort = _serverPort;
-            conf.serverName = _serverName;
-            conf.serverMOTD = _serverMOTD;
-            _server = new ValleyServer(conf);
-            _server.Listen(_serverPort);
+            _conf = new ServerConfig();
+            _conf.serverPort = _serverPort;
+            _conf.serverName = _serverName;
+            _conf.serverMOTD = _serverMOTD;
+            _server = ValleyServer.Instance;
+            Listen();
         }
 
 
         public void Listen()
         {
-            _server.Listen(_serverPort);
+            _server.Listen(_conf, _serverPort);
         }
     }
 }

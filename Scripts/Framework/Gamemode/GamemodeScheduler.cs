@@ -3,20 +3,23 @@
 *   If a Gamemode is the Blu-Ray, this is the Blu-Ray player
 *       - Event GameModeChangePhase raised when phase changes
 */
-namespace ValleyNet.Gamemode
+namespace ValleyNet.Framework.Gamemode
 {
     using System;
     using System.Collections;
     using System.Collections.Generic;
     using UnityEngine;
     using ValleyNet.Core.Session;
-    using ValleyNet.Gamemode;
-    using ValleyNet.Gamemode.Phase;
+    using ValleyNet.Framework.Gamemode;
+    using ValleyNet.Framework.Gamemode.Phase;
 
 
     public class GamemodeScheduler : MonoBehaviour
     {
         public event EventHandler GamemodeChangePhase; // Gamemode Change Event
+
+        [SerializeField]
+        private string _gamemodeName;
 
         protected Session _session;         // Game session this scheduler is scheduling
         protected Gamemode _gamemode;      // Gamemode this scheduler is enacting 
@@ -36,13 +39,22 @@ namespace ValleyNet.Gamemode
         public int phaseTimer {get{return _phaseTimer;}}
 
         
-
-        void Start()
+        void Awake()
         {
             _gamemode = new Gamemode();
             _phaseQueue = new PhaseQueue(_corePhases, _gamemode.phases);
         }
     
+
+        public void ForceNewGamemode(Gamemode nextGamemode, string playPhaseName="Play")
+        {
+            _gamemode = nextGamemode;
+            _gamemodeName = _gamemode.name;
+            Debug.Log("[ValleyNet] New Gamemode \'" + nextGamemode.name + "\' Forcibly Scheduled");
+            _phaseQueue.Clear(); // Clear phase queue schedule
+            _phaseQueue.BuildNewPhaseQueue(_corePhases, _gamemode.phases, playPhaseName); // build new phase queue from new gamemode
+        }
+
 
         // Trigger phase change event
         protected virtual void OnGamemodeChangePhase(GamemodeEventArgs eventArgs)
@@ -69,7 +81,7 @@ namespace ValleyNet.Gamemode
 
 
         // raiseTimeout : Flag if phase ended via timeout (e.g. "Loading" phase timeout to prevent infinite loading screen)
-        IEnumerator TimePhase(float time, bool raiseTimeout)
+        private IEnumerator TimePhase(float time, bool raiseTimeout)
         {
             if(time==0.0f)
             {
@@ -110,15 +122,17 @@ namespace ValleyNet.Gamemode
         {
             _currentPhase = 0;
             _phases = new List<PhaseData>();
-            BuildPhaseQueue(core, play, playPhaseName);
+            BuildNewPhaseQueue(core, play, playPhaseName);
         }
 
 
-        private void BuildPhaseQueue(PhaseData[] core, PhaseData[] gamemode, string playPhaseName="Play")
+        public void BuildNewPhaseQueue(PhaseData[] core, PhaseData[] gamemodePhases, string playPhaseName="Play")
         {
             int insertIndex = 0;
 
             _phases.InsertRange(0, core); // populate w/ Core Phases
+
+            Debug.Log("[ValleyNet] Building new Phase Schedule, injecting Gamemode's schedule into " + playPhaseName);
 
             // Search for Injection Phase
             for(int i = 0; i < _phases.Count; i++)
@@ -130,7 +144,7 @@ namespace ValleyNet.Gamemode
             }
 
             // Inject into list to build final schedule
-            _phases.InsertRange(insertIndex, gamemode);
+            _phases.InsertRange(insertIndex, gamemodePhases);
         }
 
 

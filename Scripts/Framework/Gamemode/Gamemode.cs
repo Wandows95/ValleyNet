@@ -1,14 +1,14 @@
-namespace ValleyNet.Gamemode
+namespace ValleyNet.Framework.Gamemode
 {
     using System;
-    using ValleyNet.Gamemode.Phase;
+    using ValleyNet.Framework.Gamemode.Phase;
     
 
     public class Gamemode 
     {
         // Phases cannot be named "Loading", "Lobby", "Post-Lobby","Play or "Post-Play"
         // List of play phases, in order of occurrance, that happen in one game or round
-        protected PhaseData[] _phases;
+        protected PhaseData[] _phases = { new PhaseData("Main", 0f) };
         protected float _playDuration = 600.0f; // If mode has no phases, this determines timelimit in seconds. Otherwise, adds up phase durations
         protected string _name="Gamemode Name";
         protected string _description="Gamemode";
@@ -93,7 +93,7 @@ namespace ValleyNet.Gamemode
     }
 }
 
-namespace ValleyNet.Gamemode.Phase
+namespace ValleyNet.Framework.Gamemode.Phase
 {
     public struct PhaseData
     {

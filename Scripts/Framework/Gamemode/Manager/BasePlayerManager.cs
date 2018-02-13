@@ -4,29 +4,36 @@ namespace ValleyNet.Gamemode.Manager
     using System.Collections.Generic;
     using UnityEngine;
     using ValleyNet.Core.Server;
+    using ValleyNet.Core.Server.Event;
     using ValleyNet.Core.Tag;
+    using ValleyNet.Framework.Gamemode;
 
 
-    public class BasePlayerManager : MonoBehaviour
+    public class BasePlayerManager
     {
+        /* EVENTS */
+        public event EventHandler MinimumPlayersReached; // Raised when minimum # of players are registered
+        public event EventHandler MaximumPlayersReached; // Raised when maximum # of players are registered
+        /**********/
         protected Gamemode _currentMode;
-        Dictionary<uint, IdentityTag> _playerList;
+        List<IdentityTag> _playerList;
+        private ValleyServer _server;
 
-        void Awake()
+        private int _maxPlayers;
+        private int _minPlayers;
+
+        public BasePlayerManager(int minPlayers, int maxPlayers)
         {
-            _playerList = new Dictionary<uint, IdentityTag>();
+            _playerList = new List<IdentityTag>();
+
+            _server = ValleyServer.Instance;
+            _server.ServerRequestedAddPlayer += OnServerRequestedAddPlayer;
         }
-
-
-        void Start()
-        {
-            //Server.GetInstance().ServerAddedPlayer += ;
-        }
-
         
-        protected virtual void OnServerAddedPlayer(EventArgs e)
+
+        protected virtual void OnServerRequestedAddPlayer(object sender, NetworkMessageEventArgs e)
         {
-            Debug.Log("Player Added");
+            Debug.Log("Player Attempting Add");
         }
 
 
@@ -42,7 +49,7 @@ namespace ValleyNet.Gamemode.Manager
         }
 
 
-        public bool RegisterPlayer(uint netId, IdentityTag p)
+        public virtual bool RegisterPlayer(IdentityTag p)
         {
             if(_currentMode == null)
             {
@@ -53,13 +60,13 @@ namespace ValleyNet.Gamemode.Manager
                 //TO-DO
                 Debug.Log("TODO");
             }
-            else if(_playerList.ContainsKey(netId))
+            else if(_playerList.Contains(p))
             {
                 Debug.Log("[ValleyNet] Player Manager: Unable to add duplicate player [" + p.username + "].");
             }
             else
             {
-                _playerList.Add(netId, p);
+                _playerList.Add(p);
                 return true;
             }
 

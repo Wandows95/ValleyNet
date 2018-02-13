@@ -11,9 +11,10 @@ namespace ValleyNet.Core.Client
     using UnityEngine;
     using UnityEngine.Networking;
     using ValleyNet.Core.Protocol.Message;
+    using ValleyNet.Core.Network;
 
 
-    public class ValleyClient
+    public class ValleyClient : IMessageHandlerRegisterable
     {
         protected NetworkClient _client;   // UNET's NetworkClient object
         public static ValleyClient mainInstance; // Main ValleyNet Client instance (first made on machine by default)
@@ -91,9 +92,20 @@ namespace ValleyNet.Core.Client
         private void RegisterBaseHandlers()
         {
             _client.RegisterHandler(MsgType.Connect, OnClientConnected);
-            _client.RegisterHandler(MsgType.Disconnect, OnClientDisconnected);
+            _client.RegisterHandler(MessageType.ConnectACK, OnClientConnectionACK);
             _client.RegisterHandler(MessageType.Config, OnClientReceivedConfig);
+            _client.RegisterHandler(MessageType.AddPlayerACK, OnAddPlayerACK);            
+            _client.RegisterHandler(MsgType.Disconnect, OnClientDisconnected);
+            
+            
             OnClientRegisteredHandlers(); // Raise 'ClientRegisteredHandlers' event
+        }
+
+
+        // Register message handler with NetworkClient
+        public void RegisterMessageHandler(short msgType, NetworkMessageDelegate dele)
+        {
+            _client.RegisterHandler(msgType, dele);
         }
 
 
@@ -113,23 +125,9 @@ namespace ValleyNet.Core.Client
         // Sends off client's profile to server
         protected virtual void OnClientConnected(NetworkMessage netMsg)
         {
-            // Raise ClientConnected Event
-            EventHandler handler = ClientConnected;
-            if(handler != null)
-            {
-                handler(this, new EventArgs());
-            }
-            
-            _client.Send(MessageType.Identity, _clientIdentity); // Send profile to server
-
-            Debug.Log("[ValleyNet] Client(IpBind:" + _serverIp + "): Connection Success! Authenticating profile with server " + _clientIdentity + "...");
-
-            // Raise ClientStartSync Event
-            handler = ClientStartSync;
-            if(handler != null)
-            {
-                handler(this, new EventArgs());
-            }
+            ConnectionRequestMessage connREQ = new ConnectionRequestMessage();
+            connREQ.username = _username;
+            _client.Send(MessageType.ConnectREQ, connREQ);
         }
 
 
@@ -145,6 +143,51 @@ namespace ValleyNet.Core.Client
             {
                 handler(this, new EventArgs());
             }
+        }
+
+
+        protected virtual void OnClientConnectionACK(NetworkMessage netMsg)
+        {
+            ConnectionResponseMessage connACK = netMsg.ReadMessage<ConnectionResponseMessage>();
+
+            if(connACK.isAccepted)
+            {
+                AddPlayerRequestMessage reqMsg = new AddPlayerRequestMessage();
+                reqMsg.username = _username;
+
+                // Raise ClientConnected Event
+                EventHandler handler = ClientConnected;
+                if(handler != null)
+                {
+                    handler(this, new EventArgs());
+                }
+                
+                _client.Send(MessageType.Identity, _clientIdentity); // Send identity to server
+                _client.Send(MessageType.AddPlayerREQ, reqMsg);
+
+                Debug.Log("[ValleyNet] Client(IpBind:" + _serverIp + "): Connection Success! Authenticating profile with server " + _clientIdentity + "...");
+
+                // Raise ClientStartSync Event
+                handler = ClientStartSync;
+                if(handler != null)
+                {
+                    handler(this, new EventArgs());
+                }
+            }
+            else if(connACK.maxConnections == connACK.currentConnections)
+            {
+                Debug.Log("[ValleyNet] Client(IpBind:" + _serverIp + "): Max connection slots full, connection rejected");
+            }
+            else
+            {
+                Debug.Log("[ValleyNet] Client(IpBind:" + _serverIp + "): Connection rejected");
+            }
+        }
+
+
+        protected virtual void OnAddPlayerACK(NetworkMessage netMsg)
+        {
+            
         }
 
 

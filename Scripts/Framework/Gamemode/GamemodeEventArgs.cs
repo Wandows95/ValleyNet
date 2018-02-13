@@ -1,4 +1,4 @@
-namespace ValleyNet.Gamemode
+namespace ValleyNet.Framework.Gamemode
 {
     using System;
 
