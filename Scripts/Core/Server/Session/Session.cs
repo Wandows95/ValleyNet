@@ -10,7 +10,6 @@ namespace ValleyNet.Core.Session
     using System.Collections.Generic;
     using UnityEngine;
 
-
     public class Session
     {   
         private static int _nextId = 0;
@@ -29,7 +28,6 @@ namespace ValleyNet.Core.Session
         public string name{ get{return _name;} }
         public string tag{ get{return _tag;} }
         
-
         public Session(string name, string tag, bool isActive=true)
         {
             _name = name;
@@ -39,12 +37,10 @@ namespace ValleyNet.Core.Session
             //Debug.Log("[ValleyNet] Session \'" + this.ToString() + "\' created");
         }
 
-
-        public string ToString()
+        public override string ToString()
         {
             return tag + "-" + name;
         }
-
 
         protected virtual void OnSessionStart(EventArgs eventArgs)
         {
@@ -56,7 +52,6 @@ namespace ValleyNet.Core.Session
                 handler(this, eventArgs);
             }
         }
-
 
         protected virtual void OnSessionEnd(EventArgs eventArgs)
         {

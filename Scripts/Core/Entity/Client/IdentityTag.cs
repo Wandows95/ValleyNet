@@ -23,7 +23,6 @@ namespace ValleyNet.Core.Tag
         }
     }
     
-
     public struct IdentityTagData
     {
         public NetworkConnection conn;
@@ -31,7 +30,7 @@ namespace ValleyNet.Core.Tag
         public Permissions permissionLevel;
 
     }
-
+    
 
     // Permission level on the server
     public enum Permissions : byte

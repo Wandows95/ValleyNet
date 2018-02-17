@@ -30,6 +30,8 @@ namespace ValleyNet.Core.Protocol.Message
         public string MOTD = "";        // p bits (p/8 bytes)
         public string serverName = "";  // q bits (q/8 bytes)
 
+        public ConfigMessage(){}
+
         public ConfigMessage(int tickRate, int numConnections, int maxConnections, string serverName, string MOTD)
         {
             this.tickRate = tickRate;
@@ -38,7 +40,6 @@ namespace ValleyNet.Core.Protocol.Message
             this.serverName = serverName;
             this.MOTD = MOTD;
         }
-
 
         public override string ToString()
         {
@@ -71,6 +72,8 @@ namespace ValleyNet.Core.Protocol.Message
     {
         public bool isAccepted;        // Was the identity accepted?
         public byte permissionLevel;   // If accepted, what level was granted?
+
+        public IdentityResponseMessage(){}
 
         public IdentityResponseMessage(bool isAccepted, byte permissionLevel)
         {
@@ -105,5 +108,6 @@ namespace ValleyNet.Core.Protocol.Message
         public const short AddPlayerREQ = 52;
         public const short AddPlayerACK = 53;
         public const short IdentityResponse = 54;
+        public const short ChatMessage = 55;
     }
 }

@@ -1,15 +1,17 @@
 namespace ValleyNet.Framework.Client.Chat
 {
     using System;
-    using System.Collection.Generic;
+    using System.Collections.Generic;
+    using UnityEngine;
     using UnityEngine.Networking;
     using ValleyNet.Core.Client;
+    using ValleyNet.Core.Protocol.Message;
 
     // SIZE: 64 or 128 bit (8 or 16 bytes)
     public struct ChatMessage
     {
-        public string payload   {get; protected set;} // 32 or 64 bit
-        public string username  {get; protected set;} // 32 or 64 bit
+        public string payload   {get; private set;} // 32 or 64 bit
+        public string username  {get; private set;} // 32 or 64 bit
 
         public ChatMessage(string payload, string username)
         {
@@ -17,7 +19,6 @@ namespace ValleyNet.Framework.Client.Chat
             this.username = username;
         }
     }
-
 
     public class NetworkChatMessage : MessageBase
     {
@@ -34,14 +35,12 @@ namespace ValleyNet.Framework.Client.Chat
         }
     }
 
-
     public class ChatMessageEventArgs : EventArgs
     {
         public string channelName {get; set;}
         public string username {get; set;}
         public string payload {get; set;}
     }
-
 
     /*
     *   Represents the client portion of a public, insecure chat channel
@@ -70,7 +69,6 @@ namespace ValleyNet.Framework.Client.Chat
             _listeners = new List<IChatChannelListener>();
         }
 
-
         public void RegisterListener(IChatChannelListener listener)
         {
             if(!_listeners.Contains(listener))
@@ -79,12 +77,10 @@ namespace ValleyNet.Framework.Client.Chat
             }
         }
 
-
         public void SendMessage(string payload)
         {
             BuildSendMessage(new ChatMessage(payload, _localClient.username));
         }
-
 
         public void ReceiveMessage(ChatMessage msg)
         {
@@ -92,14 +88,18 @@ namespace ValleyNet.Framework.Client.Chat
             NotifyListeners(msg);
         }
 
-        
         protected virtual void BuildSendMessage(ChatMessage msg)
         {
-            msg.user = _localClient.username;
-            _localClient.client.Send(MessageType.ChatMessage, new NetworkChatMessage(msg.payload, msg.username));
-            ReceiveMessage(msg); // Receive message sent locally to be displayed
+            if(msg.username == _localClient.username)
+            {
+                _localClient.uNetClient.Send(MessageType.ChatMessage, new NetworkChatMessage(msg.payload, msg.username, _channelName));
+                ReceiveMessage(msg); // Receive message sent locally to be displayed
+            }
+            else
+            {
+                Debug.Log("[ClientChannel-" + _channelName + "] Attemping to send a chat message with an invalid username");
+            }
         }
-
 
         protected virtual void BufferMessage(ChatMessage msg)
         {
@@ -110,7 +110,6 @@ namespace ValleyNet.Framework.Client.Chat
 
             _chatBuffer.Add(msg);
         }
-
 
         private void NotifyListeners(ChatMessage msg)
         {

@@ -1,5 +1,8 @@
 namespace ValleyNet.Framework.Client.Chat
 {
+    using ValleyNet.Core.Client;
+    using System.Collections.Generic;
+
     public class ClientChat : IChatChannelListener
     {
         protected List<ClientChatChannel> _channels;
@@ -13,12 +16,12 @@ namespace ValleyNet.Framework.Client.Chat
             _client = client;
         }
 
-
         public virtual void ReceiveChannelMessage(ChatMessage msg)
         {
             _messageBuffer.Add(msg);
         }
     }
+
 
     public interface IChatChannelListener
     {

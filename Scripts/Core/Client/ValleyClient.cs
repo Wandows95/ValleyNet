@@ -13,7 +13,6 @@ namespace ValleyNet.Core.Client
     using ValleyNet.Core.Protocol.Message;
     using ValleyNet.Core.Network;
 
-
     public class ValleyClient : IMessageHandlerRegisterable
     {
         protected NetworkClient _client;   // UNET's NetworkClient object
@@ -38,6 +37,7 @@ namespace ValleyNet.Core.Client
         public static ValleyClient mainInstance  {get{return _mainInstance;}}
         public NetworkClient uNetClient          {get{return _client;}}
         public string serverIp                   {get{return _serverIp;}}
+        public string username                   {get{return _username;}}
         public int serverPort                    {get{return _serverPort;}}
         public int tickRate                      {get{return _tickRate;}}
         public bool isConnected                  {get{return _client.isConnected;}}
@@ -55,7 +55,6 @@ namespace ValleyNet.Core.Client
                 RegisterBaseHandlers();
             }
         }
-
 
         // Connect to server as username via LLAPI
         public void Connect(string serverIp="127.0.0.1", int serverPort=8888)
@@ -76,7 +75,6 @@ namespace ValleyNet.Core.Client
             }
         }
 
-
         // Send UNet Message via Client
         public bool Send(short msgType, MessageBase msg)
         {
@@ -88,27 +86,24 @@ namespace ValleyNet.Core.Client
             return false;
         }
 
-
         // Register basic LLAPI Handlers for ValleyClient
         private void RegisterBaseHandlers()
         {
-            _client.RegisterHandler(MsgType.Connect, OnClientConnected);
-            _client.RegisterHandler(MessageType.ConnectACK, OnClientConnectionACK);
-            _client.RegisterHandler(MessageType.Config, OnClientReceivedConfig);
-            _client.RegisterHandler(MessageType.AddPlayerACK, OnAddPlayerACK);            
+            _client.RegisterHandler(MsgType.Connect, OnClientConnected); // Transport Connect
+            _client.RegisterHandler(MessageType.ConnectACK, OnClientConnectionACK); // Raw ValleyNet Connection Request
+            _client.RegisterHandler(MessageType.Config, OnClientReceivedConfig); // Player ValleyNet Response + Simulation Config
+            _client.RegisterHandler(MessageType.IdentityResponse, OnIdentityResponse); // IdentityTag login response
+            _client.RegisterHandler(MessageType.AddPlayerACK, OnAddPlayerACK);
             _client.RegisterHandler(MsgType.Disconnect, OnClientDisconnected);
-            
             
             OnClientRegisteredHandlers(); // Raise 'ClientRegisteredHandlers' event
         }
-
 
         // Register message handler with NetworkClient
         public void RegisterMessageHandler(short msgType, NetworkMessageDelegate dele)
         {
             _client.RegisterHandler(msgType, dele);
         }
-
 
         // Raises 'ClientRegisteredHandlers' Event
         protected virtual void OnClientRegisteredHandlers()
@@ -121,7 +116,6 @@ namespace ValleyNet.Core.Client
             }
         }
 
-
         // Network Facing, Raises 'ClientConnected' & 'ClientStartSync' Events
         // Sends off client's profile to server
         protected virtual void OnClientConnected(NetworkMessage netMsg)
@@ -130,7 +124,6 @@ namespace ValleyNet.Core.Client
             connREQ.username = _username;
             _client.Send(MessageType.ConnectREQ, connREQ);
         }
-
 
         protected virtual void OnClientConnectionACK(NetworkMessage netMsg)
         {
@@ -171,7 +164,6 @@ namespace ValleyNet.Core.Client
             }
         }
 
-
         // Network Facing, Raises 'ClientFinishSync' Events
         // Syncs local simulation/network config with remote's simulation/network config
         protected virtual void OnClientReceivedConfig(NetworkMessage netMsg)
@@ -180,7 +172,9 @@ namespace ValleyNet.Core.Client
 
             // Sync local simulation settings with remote simulation
             _tickRate = _serverConfig.tickRate; // Set tickrate to server
-            Time.fixedDeltaTime = 1/_serverConfig.tickRate; // Set FixedUpdate() rate to server's
+            Time.timeScale = 1.0f;
+            Time.fixedDeltaTime = (1/(float)_serverConfig.tickRate) * Time.timeScale; // Set FixedUpdate() rate to server's
+            
 
             // Raise ClientConnected Event
             EventHandler handler = ClientConnected;
@@ -191,9 +185,8 @@ namespace ValleyNet.Core.Client
             
             _client.Send(MessageType.Identity, _clientIdentity); // Send identity to server
             Debug.Log("[ValleyNet] Client(IpBind:" + _serverIp + "): Connection Success via Config ACK! Authenticating identity with server " + _clientIdentity + "...");
-            Debug.Log("[ValleyNet] ValleyClient: Synchronized local simulation with server [tickrate: " + _tickRate + "(FixedUpdate() Rate: " + Time.fixedDeltaTime + "ms)]");
+            Debug.Log("[ValleyNet] ValleyClient: Synchronized local simulation with server [tickrate: " + _tickRate + " (FixedUpdate Rate: " + (float)Time.fixedDeltaTime + "ms)]");
         }
-
 
         protected virtual void OnIdentityResponse(NetworkMessage netMsg)
         {
@@ -219,11 +212,9 @@ namespace ValleyNet.Core.Client
             }
         }
 
-
         protected virtual void OnAddPlayerACK(NetworkMessage netMsg)
         {
         }
-
     
         // Network Facing, Raises 'ClientDisconnected' Event
         // Resets 'isConnected' to false
