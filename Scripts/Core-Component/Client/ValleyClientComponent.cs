@@ -23,7 +23,6 @@ namespace ValleyNet.Core.Component.Client
 
         public bool isConnected{get{return (_client==null) ? false : _client.isConnected;}}
 
-
         void Start()
         {
             IdentityMessage identity = new IdentityMessage();  // Build profile for client
@@ -31,7 +30,6 @@ namespace ValleyNet.Core.Component.Client
             _client = new ValleyClient(identity, useBaseNetworkHandlers); // Create client for profile
             Connect();
         }
-
 
         public void Connect()
         {

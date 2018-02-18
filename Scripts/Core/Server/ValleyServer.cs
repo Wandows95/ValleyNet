@@ -1,9 +1,21 @@
-/*
-*   LLAPI NetworkServer Wrapper for ValleyNet
-*   
-*   This object essentially acts as a base host configuration object in addition
-*   to generating C# events based on network events
-*/
+///<file>
+///<summary>
+///LLAPI NetworkServer Wrapper for ValleyNet
+///   
+///This object essentially acts as a base host configuration object in addition
+///to generating C# events based on network events
+///</summary>
+///<remarks>
+///Default Handshake:
+/// Implicit Connect Provided by UNET NetworkServer on MsgType.Connect
+/// NetRaiseConnectionRequested(connREQ) "Valley Connect REQ" -> ConnectionACK
+/// NetRaiseClientIdentified(clientId) "Client has Id'd itself" -> serverConfig || idACK
+/// NetRaiseClientRequestedAddPlayer(AddPlayerREQ) "Client wants to add player" -> AddPlayerACK
+///</remarks>
+///</file>
+// Disable P2P Host Migration in UNET Layer
+#undef ENABLE_UNET_HOST_MIGRATION
+
 namespace ValleyNet.Core.Server
 {
     using System;

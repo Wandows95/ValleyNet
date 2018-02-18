@@ -4,6 +4,7 @@ namespace ValleyNet.Framework.Session
     using System.Collections.Generic;
     using UnityEngine;
     using ValleyNet.Core.Session;
+    using ValleyNet.Core.Asset;
     using ValleyNet.Map;
     using ValleyNet.Framework.Gamemode;
 
@@ -14,6 +15,7 @@ namespace ValleyNet.Framework.Session
         public event EventHandler GamemodeChange;
         /**********/
         private List<MapTag> _mapPlaylist;
+        
         private GamemodeScheduler _scheduler;
 
 
@@ -34,6 +36,13 @@ namespace ValleyNet.Framework.Session
             _mapPlaylist = new List<MapTag>();
         }
 
+        public void RegisterSessionPrefabs(GameObject[] prefabs)
+        {
+            if(_scheduler.currentPhase == "Loading")
+            {
+                AssetManager.RegisterPrefabs(prefabs);
+            }
+        }
 
         // Sets Gamemode as the next gamemode to be schduled
         public void QueueNextGamemode()

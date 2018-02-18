@@ -13,7 +13,6 @@ namespace ValleyNet.Framework.Gamemode
     using ValleyNet.Framework.Gamemode;
     using ValleyNet.Framework.Gamemode.Phase;
 
-
     public class GamemodeScheduler : MonoBehaviour
     {
         public event EventHandler GamemodeChangePhase; // Gamemode Change Event
@@ -37,15 +36,14 @@ namespace ValleyNet.Framework.Gamemode
         };
 
         public int phaseTimer {get{return _phaseTimer;}}
+        public string currentPhase {get{return _phaseQueue.currentPhase;}}
 
-        
         void Awake()
         {
             _gamemode = new Gamemode();
             _phaseQueue = new PhaseQueue(_corePhases, _gamemode.phases);
         }
     
-
         public void ForceNewGamemode(Gamemode nextGamemode, string playPhaseName="Play")
         {
             _gamemode = nextGamemode;
@@ -54,7 +52,6 @@ namespace ValleyNet.Framework.Gamemode
             _phaseQueue.Clear(); // Clear phase queue schedule
             _phaseQueue.BuildNewPhaseQueue(_corePhases, _gamemode.phases, playPhaseName); // build new phase queue from new gamemode
         }
-
 
         // Trigger phase change event
         protected virtual void OnGamemodeChangePhase(GamemodeEventArgs eventArgs)
@@ -67,7 +64,6 @@ namespace ValleyNet.Framework.Gamemode
             }
         }
 
-
         public void NextPhase(bool didTimeout=false)
         {
             if(_phaseTimer > 0)
@@ -78,7 +74,6 @@ namespace ValleyNet.Framework.Gamemode
             OnGamemodeChangePhase(new GamemodeEventArgs(_phaseQueue.NextPhase(), didTimeout)); // Raise phase change event
             StartCoroutine("TimePhase", _corePhases[_phaseQueue.phaseNum].duration); // Begin countdown of new phase
         }
-
 
         // raiseTimeout : Flag if phase ended via timeout (e.g. "Loading" phase timeout to prevent infinite loading screen)
         private IEnumerator TimePhase(float time, bool raiseTimeout)
@@ -104,7 +99,6 @@ namespace ValleyNet.Framework.Gamemode
         }
     }
     
-
     /*
     *   Phase schedule tracking structure.
     *   Compiles gamemode phase schedule from core and gamemode layer
@@ -116,6 +110,7 @@ namespace ValleyNet.Framework.Gamemode
         private int _currentPhase;
 
         public int phaseNum{ get{return _currentPhase; }}
+        public string currentPhase {get{return _phases[_currentPhase].name;}}
 
 
         public PhaseQueue(PhaseData[] core, PhaseData[] play, string playPhaseName="Play")

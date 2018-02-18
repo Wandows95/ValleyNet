@@ -1,6 +1,8 @@
-/*
-*   Tagging object used to track an identified network client
-*/
+///<file>
+///<summary>
+///Tagging object used to track an identified network client
+///</summary>
+///</file>
 namespace ValleyNet.Core.Tag
 {
     using UnityEngine.Networking;

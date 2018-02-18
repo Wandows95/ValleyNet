@@ -1,10 +1,23 @@
-/*
-*   LLAPI NetworkClient Wrapper for ValleyNet
-*   
-*   This object generates basic client events based on network data received from Server,
-*   synchronizes network/simulation settings with server
-*
-*/
+///<file>
+///<summary>
+///LLAPI NetworkClient Wrapper for ValleyNet   
+///  
+///This object generates basic client events based on network data received from Server,
+///synchronizes network/simulation settings with server
+///</summary>
+///<remarks>
+///Default Handshake:
+/// Connect() -> MsgType.Connect
+/// OnClientConnected(canConnectTransport) -> ConnectionReq
+/// OnClientConnectionACK(canConnect) -> ClientIdentity if true
+/// OnClientReceivedConfig(serverConfig) "Implicit ACK" -> AddPlayerREQ
+/// OnIdentityResponse(idACK) "Explicit Ack"
+/// OnAddPlayerACK()
+///</remarks>
+///</file>
+// Disable P2P Host Migration in UNET Layer
+#undef ENABLE_UNET_HOST_MIGRATION 
+
 namespace ValleyNet.Core.Client
 {
     using System;
@@ -29,10 +42,10 @@ namespace ValleyNet.Core.Client
         protected string _serverIp = "127.0.0.1"; // Target Server IP
         protected int _serverPort = 8888;         // Target Server Port
         protected string _username = "VN_USER";   // Client's username
-        private int _tickRate = 0;               // Update rate of the client's simulation. Syncs with server
+        private int _tickRate = 0;                // Update rate of the client's simulation. Syncs with server
         private bool _isConnected = false;
         private ConfigMessage _serverConfig;      // Message containing the server's configuration
-        private IdentityMessage _clientIdentity;    // Client Profile container, used to send server our identity
+        private IdentityMessage _clientIdentity;  // Client Profile container, used to send server our identity
 
         public static ValleyClient mainInstance  {get{return _mainInstance;}}
         public NetworkClient uNetClient          {get{return _client;}}

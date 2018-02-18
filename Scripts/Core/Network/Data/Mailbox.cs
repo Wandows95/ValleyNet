@@ -8,28 +8,28 @@ namespace ValleyNet.Core.Network.Data
     using System.Collections.Generic;
     using UnityEngine.Networking;
 
-
-    public class Mailbox<T> where T : NetworkMessage
+    public class Mailbox<T> where T : MessageBase
     {
         /* EVENTS */
         public event EventHandler messageReceived;
         /**********/
         protected List<T> _messageBuffer;
-        protected IDataFilter<T> _inFilter; // Input modifier (e.g. Decrypt, Decompress)
-        protected IDataFilter<T> _outFiter; // Output modifier (e.g. Encrypt, Compress)
+        protected IMessageSerializer<T, NetworkMessage> _inFilter; // Input modifier (e.g. Decrypt, Decompress)
+        protected IMessageSerializer<T, T> _outFilter; // Output modifier (e.g. Encrypt, Compress)
         protected IMessageCourier _courier;
         private T _outgoing;
         private int _bufferSize; // in messages
         private int _id;
-        private int _msgType;
+        private short _msgType;
         private bool _isServer;
         private bool _dirty;
 
         public int id {get{return _id;}}
-        public T outgoing{set{_dirty = true; _outgoing = value;}}
+        public T outgoing{set{if(value != null){_dirty = true; _outgoing = value;}}}
 
-        public Mailbox(int id, short msgType, int bufferSize = 10, IDataFilter<T> inFilter = null, IDataFilter<T> outFilter = null)
+        public Mailbox(int id, short msgType, IMessageCourier courier, IMessageSerializer<T, NetworkMessage> inFilter, IMessageSerializer<T, T> outFilter = null, int bufferSize = 10)
         {
+            _courier = courier;
             _bufferSize = bufferSize;
             _messageBuffer = new List<T>();
             _outFilter = outFilter;
@@ -37,25 +37,42 @@ namespace ValleyNet.Core.Network.Data
             _msgType = msgType;
             _id = id;
             _dirty = false;
+
+            _courier.RegisterHandler(msgType, OnMessageReceived);
         }
 
-        protected virtual void Send()
+        public virtual void Send()
         {
             if(_dirty)
             {
-                _courier.Send(_outgoing.msgType, _outgoing);
+                _courier.Send(_msgType, _outgoing);
                 _dirty = false;
             }
         }
 
-        protected virtual void OnMessageReceived()
+        protected virtual void OnMessageReceived(NetworkMessage msg)
         {
-            EventHandler handler = messageReceived;
+            T newMsg = _inFilter.Serialize(msg);
+            BufferNewMessage(newMsg);
 
+            EventHandler handler = messageReceived;
             if(messageReceived != null)
             {
                 handler(this, new EventArgs());
             }
+        }
+
+        protected void BufferNewMessage(T msg)
+        {
+            if(_messageBuffer.Count >= _bufferSize)
+            {
+                while(_messageBuffer.Count > _bufferSize-1) // Trim and make way for new msg
+                {
+                    _messageBuffer.RemoveAt(0);
+                }
+            }
+
+            _messageBuffer.Add(msg);
         }
 
         public string GetChannelName()
@@ -72,11 +89,16 @@ namespace ValleyNet.Core.Network.Data
         {
             return _messageBuffer[0];
         }
+
+        public override string ToString()
+        {
+            return "Mailbox-" + _id + " [Type: " + typeof(T).FullName + ", Messages: " + _messageBuffer.Count + ", Dirty Bit: " + _dirty + "]";
+        }
     }
 
-    public interface IDataFilter<T> where T : MessageBase
+    public interface IMessageSerializer<T, K>
     {
-        T Filter(T in);
+        T Serialize(K input);
     }
 
     public interface IMessageCourier
