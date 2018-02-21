@@ -3,7 +3,6 @@ namespace ValleyNet.Core.Server.Component
     using UnityEngine;
     using ValleyNet.Core.Server;
 
-
     public class ValleyServerComponent : MonoBehaviour
     {
         protected ValleyServer _server;

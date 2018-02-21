@@ -34,7 +34,6 @@ namespace ValleyNet.Core.Session
             _tag = tag;
             _id = _nextId++;
             _isActive = isActive;
-            //Debug.Log("[ValleyNet] Session \'" + this.ToString() + "\' created");
         }
 
         public override string ToString()

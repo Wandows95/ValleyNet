@@ -15,14 +15,14 @@ namespace ValleyNet.Framework.Gamemode.Server
 
     public class GamemodeScheduler : MonoBehaviour
     {
+        /* EVENTS */
         public event EventHandler GamemodeChangePhase; // Gamemode Change Event
-
+        /**********/
         [SerializeField]
         private string _gamemodeName;
-
-        protected Session _session;         // Game session this scheduler is scheduling
-        protected Gamemode _gamemode;      // Gamemode this scheduler is enacting 
-        protected PhaseQueue _phaseQueue;   // Queue that holds our phase "schedule"
+        protected Session _session;       // Game session this scheduler is scheduling
+        protected Gamemode _gamemode;     // Gamemode this scheduler is enacting 
+        protected PhaseQueue _phaseQueue; // Queue that holds our phase "schedule"
 
         private int _phaseTimer = 1000;
 
@@ -72,28 +72,35 @@ namespace ValleyNet.Framework.Gamemode.Server
             }
 
             OnGamemodeChangePhase(new GamemodeEventArgs(_phaseQueue.NextPhase(), didTimeout)); // Raise phase change event
-            StartCoroutine("TimePhase", _corePhases[_phaseQueue.phaseNum].duration); // Begin countdown of new phase
+            
+            if(_corePhases[_phaseQueue.phaseNum].duration > 0)
+            {
+                StartCoroutine("TimePhase", _corePhases[_phaseQueue.phaseNum].duration); // Begin countdown of new phase
+            }
         }
 
         // raiseTimeout : Flag if phase ended via timeout (e.g. "Loading" phase timeout to prevent infinite loading screen)
         private IEnumerator TimePhase(float time, bool raiseTimeout)
         {
-            if(time==0.0f)
+            if(time == 0.0f)
             {
                 yield return null;
             }
             else
             {
-                yield return new WaitForSeconds(1);
-                
-                if(_phaseTimer == 0)
+                while(true)
                 {
-                    NextPhase(raiseTimeout);
-                    yield return null;
-                }
-                else
-                {
-                    _phaseTimer--;
+                    yield return new WaitForSeconds(1);
+                    
+                    if(_phaseTimer == 0)
+                    {
+                        NextPhase(raiseTimeout);
+                        yield return null;
+                    }
+                    else
+                    {
+                        _phaseTimer--;
+                    }
                 }
             }
         }

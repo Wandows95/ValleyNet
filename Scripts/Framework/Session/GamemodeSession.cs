@@ -10,14 +10,12 @@ namespace ValleyNet.Framework.Session
 
     public class GamemodeSession : Session
     {
-        /* Events */
+        /* EVENTS */
         public event EventHandler MapChange;
         public event EventHandler GamemodeChange;
         /**********/
-        private List<MapTag> _mapPlaylist;
-        
+        private List<MapTag> _mapPlaylist;        
         private GamemodeScheduler _scheduler;
-
 
         public GamemodeSession(string tag, string name, GamemodeScheduler scheduler=null) : base(tag, name)
         {
@@ -50,13 +48,11 @@ namespace ValleyNet.Framework.Session
             //_config.nextGamemode = gamemode;
         }
 
-
         // Add map to playlist queue
         public void QueueMap(MapTag newMap)
         {
             _mapPlaylist.Add(newMap);
         }
-
 
         protected virtual void OnMapChange(EventArgs eventArgs)
         {
@@ -68,7 +64,6 @@ namespace ValleyNet.Framework.Session
             }
         }
         
-
         protected virtual void OnGamemodeChange(EventArgs eventArgs)
         {
             EventHandler handler = GamemodeChange;

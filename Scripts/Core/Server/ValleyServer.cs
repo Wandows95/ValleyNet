@@ -91,7 +91,6 @@ namespace ValleyNet.Core.Server
         public short serverState {get{return _serverState;}}
         public ServerConfig config {get{return _config;}}
 
-
         internal ValleyServer()
         {
             _serverState = ServerState.Setup;

@@ -5,20 +5,41 @@ namespace ValleyNet.Framework.Gamemode
     using UnityEngine;
     using ValleyNet.Core.Tag;
 
+    public enum Mode
+    {
+        MASTER, // Authoritative PlayerManager
+        SLAVE // Listener PlayerManager
+    }
+
     public class PlayerManager
     {
         /* EVENTS */
         public event EventHandler ReachedCapacity;
         /**********/
+        public readonly Mode MODE;
         private List<PerformanceTag>[] _teams;
-        private int _playersPerTeam;
-        private int _numTeams;
+        private short _playersPerTeam;
+        private short _numTeams;
 
-        public PlayerManager(int numTeams=1, int playersPerTeam=5)
+        public PlayerManager(short numTeams = 1, short playersPerTeam = 5, Mode MODE = Mode.SLAVE)
         {
+            this.MODE = MODE;
             _teams = new List<PerformanceTag>[numTeams];
             _playersPerTeam = playersPerTeam;
             _numTeams = numTeams;
+
+            for(int i = 0; i < _teams.Length; i++)
+            {
+                _teams[i] = new List<PerformanceTag>();
+            }
+        }
+
+        public PlayerManager(PlayerManagerPreset PRESET, Mode MODE = Mode.SLAVE)
+        {
+            this.MODE = MODE;
+            _teams = new List<PerformanceTag>[PRESET.numTeams];
+            _playersPerTeam = PRESET.playersPerTeam;
+            _numTeams = PRESET.numTeams;
 
             for(int i = 0; i < _teams.Length; i++)
             {
@@ -77,5 +98,11 @@ namespace ValleyNet.Framework.Gamemode
         {
             _idTag = idTag;
         }
+    }
+
+    public class PlayerManagerPreset
+    {
+        public short numTeams = 1;
+        public short playersPerTeam = 5;
     }
 }
