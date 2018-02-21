@@ -3,7 +3,7 @@
 *   If a Gamemode is the Blu-Ray, this is the Blu-Ray player
 *       - Event GameModeChangePhase raised when phase changes
 */
-namespace ValleyNet.Framework.Gamemode
+namespace ValleyNet.Framework.Gamemode.Server
 {
     using System;
     using System.Collections;
@@ -112,14 +112,12 @@ namespace ValleyNet.Framework.Gamemode
         public int phaseNum{ get{return _currentPhase; }}
         public string currentPhase {get{return _phases[_currentPhase].name;}}
 
-
         public PhaseQueue(PhaseData[] core, PhaseData[] play, string playPhaseName="Play")
         {
             _currentPhase = 0;
             _phases = new List<PhaseData>();
             BuildNewPhaseQueue(core, play, playPhaseName);
         }
-
 
         public void BuildNewPhaseQueue(PhaseData[] core, PhaseData[] gamemodePhases, string playPhaseName="Play")
         {
@@ -142,7 +140,6 @@ namespace ValleyNet.Framework.Gamemode
             _phases.InsertRange(insertIndex, gamemodePhases);
         }
 
-
         // Get next phase, wraps around
         public string NextPhase()
         {
@@ -156,7 +153,6 @@ namespace ValleyNet.Framework.Gamemode
             return _phases[_currentPhase].name;
         }
 
-
         // Inject phase into the Queue @ index
         public bool Insert(int index, PhaseData newPhase)
         {
@@ -169,13 +165,11 @@ namespace ValleyNet.Framework.Gamemode
             return true;
         }
 
-
         // Add phase to end of Queue
         public void Append(PhaseData newPhase)
         {
             _phases.Add(newPhase);
         }
-
 
         // Flush phase queue
         public void Clear()

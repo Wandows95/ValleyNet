@@ -23,19 +23,16 @@ namespace ValleyNet.Framework.Gamemode
         public bool hasPhases           {get{if(_phases != null) {return (_phases.Length > 0);} return false;}}
         public PhaseData[] phases       {get{if(_phases!= null){return _phases;} else return new PhaseData[1];}}
         
-
         public Gamemode(GamemodeParams overrideParams)
         {
             LoadParams(overrideParams);
             _playDuration = GetPlayDuration();
         }
 
-
         public Gamemode()
         {
             _playDuration = GetPlayDuration();
         }
-        
 
         public float GetPlayDuration()
         {
@@ -56,7 +53,6 @@ namespace ValleyNet.Framework.Gamemode
             return duration;
         }
 
-
         private void LoadParams(GamemodeParams _params)
         {
             if(_params.maxPlayers > 0 && _params.maxPlayers >= _params.minPlayers)
@@ -65,7 +61,6 @@ namespace ValleyNet.Framework.Gamemode
                 _minPlayers = _params.minPlayers;
             }
         }
-
 
         // EVENT(src: GamemodeScheduler) Raised when scheduler has changed phase
         protected virtual void OnGamemodeChangePhase(GamemodeEventArgs eventArgs)

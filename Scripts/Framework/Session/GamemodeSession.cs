@@ -6,7 +6,7 @@ namespace ValleyNet.Framework.Session
     using ValleyNet.Core.Session;
     using ValleyNet.Core.Asset;
     using ValleyNet.Map;
-    using ValleyNet.Framework.Gamemode;
+    using ValleyNet.Framework.Gamemode.Server;
 
     public class GamemodeSession : Session
     {
